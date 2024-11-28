@@ -13,10 +13,10 @@ A web application to locate and display relief centers providing essential resou
 ---
 ## Screenshots
 ### Current Location and Search Feature
-![Current Location and Search Feature](images/ss1.jpg)
+![Current Location and Search Feature](ss1.jpg)
 
 ### Relief Center Information
-![Relief Center Information](images/ss2.jpg)
+![Relief Center Information](ss2.jpg)
 
 
 
