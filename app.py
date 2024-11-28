@@ -21,7 +21,10 @@ def search():
     lat = request.args.get("lat", type=float)
     lon = request.args.get("lon", type=float)
     distance = request.args.get("distance", "10km")
-    
+
+    if not lat or not lon:
+        return jsonify({"error": "Latitude and Longitude are required parameters."}), 400
+
     body = {
         "query": {
             "geo_distance": {
@@ -44,8 +47,11 @@ def search():
             }
         }
 
-    response = es.search(index="relief_centers", body=body)
-    return jsonify(response["hits"]["hits"])
+    try:
+        response = es.search(index="relief_centers", body=body)
+        return jsonify(response["hits"]["hits"])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
