@@ -11,6 +11,15 @@ A web application to locate and display relief centers providing essential resou
 - Data powered by Elasticsearch for real-time querying.
 
 ---
+## Screenshots
+### Current Location and Search Feature
+![Current Location and Search Feature](images/ss1.jpg)
+
+### Relief Center Information
+![Relief Center Information](images/ss2.jpg)
+
+
+
 
 ## Setup Instructions
 
