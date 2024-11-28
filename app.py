@@ -1,50 +1,68 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask import Flask, jsonify, request
 from elasticsearch import Elasticsearch
+from flask_cors import CORS
 
+# Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app, origins=["*"])
 
-# Connect to Elasticsearch
-es = Elasticsearch(
-    hosts=["http://localhost:9200"]
-)
+# Initialize Elasticsearch client
+# Replace "http://localhost:9200" with your Elasticsearch URL if different
+es = Elasticsearch(hosts=["http://localhost:9200"])
 
-@app.route('/search', methods=['GET'])
+@app.route("/")
+def home():
+    return "Backend is running!"
+
+@app.route("/search", methods=["GET"])
 def search():
-    query = request.args.get('q', None)
-    lat = float(request.args.get('lat', 40.7306))
-    lon = float(request.args.get('lon', -73.9352))
-    distance = request.args.get('distance', '10km')
+    """
+    Endpoint to search relief centers based on query parameters.
+    Query Parameters:
+        q: Resource to search for (e.g., "food")
+        lat: Latitude of the location
+        lon: Longitude of the location
+        distance: Search radius (e.g., "10km")
+    """
+    query = request.args.get("q", "")
+    lat = request.args.get("lat", type=float)
+    lon = request.args.get("lon", type=float)
+    distance = request.args.get("distance", "10km")
 
-    es_query = {
-        "query": {
-            "bool": {
-                "must": [{"match": {"resources": query}}] if query else [],
-                "filter": {
-                    "geo_distance": {
-                        "distance": distance,
-                        "location": {"lat": lat, "lon": lon}
+    if not lat or not lon:
+        return jsonify({"error": "Latitude and Longitude are required!"}), 400
+
+    try:
+        # Elasticsearch geo-distance query
+        body = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {"match": {"resources": query}}
+                    ],
+                    "filter": {
+                        "geo_distance": {
+                            "distance": distance,
+                            "location": {
+                                "lat": lat,
+                                "lon": lon
+                            }
+                        }
                     }
                 }
             }
         }
-    }
 
-    try:
-        result = es.search(index="relief_centers", body=es_query)
-        return jsonify(result['hits']['hits'])
+        response = es.search(index="relief_centers", body=body)
+        hits = response["hits"]["hits"]
+
+        # Format the response
+        results = [{"_source": hit["_source"], "_score": hit["_score"]} for hit in hits]
+        return jsonify(results)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/add', methods=['POST'])
-def add():
-    data = request.json
-    try:
-        es.index(index="relief_centers", document=data)
-        return jsonify({"message": "Data added successfully"}), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# Export Flask app for Vercel
+if __name__ == "__main__":
+    app.run()
